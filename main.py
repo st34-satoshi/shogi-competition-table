@@ -30,13 +30,19 @@ class Participant:
         return len(self.to_play_participants)
 
     def set_opponent(self, opponent):
-        self.to_play_participants.remove(opponent)
-        self.opponents.append(opponent)
+        if opponent is not None:
+            self.to_play_participants.remove(opponent)
+            self.opponents.append(opponent)
+        else:
+            self.opponents.append(self)
 
     def get_table_row(self):
-        row = [self.name,]
+        row = [self.name]
         for opponent in self.opponents:
-            row.append(opponent.name)
+            if opponent.id == self.id:
+                row.append("休み")
+            else:
+                row.append(opponent.name)
         return row
 
 
@@ -78,6 +84,8 @@ def next_match_list(participant_list):
 def make_participants_table(file_name):
     participant_list = []
     # read file
+    # TODO if you want to use shift_jis, change here
+    # with open(file_name, 'r', encoding='shift_jis') as f:
     with open(file_name, 'r', encoding='utf-8') as f:
         reader = csv.reader(f)
         header = next(reader)  # ヘッダーを読み飛ばす
@@ -146,8 +154,12 @@ if __name__ == '__main__':
             print("cannot decide next opponent")
             break
         for participant in participants:
-            opponent_id = player_ids[participant.id]
-            participant.set_opponent(participants[opponent_id])
+            if participant.id in player_ids:
+                opponent_id = player_ids[participant.id]
+                participant.set_opponent(participants[opponent_id])
+            else:
+                # rest
+                participant.set_opponent(None)
         decided_times += 1
     # save
     save_to_file(participants, decided_times)
