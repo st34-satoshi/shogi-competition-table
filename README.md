@@ -1,1 +1,1 @@
-# shogi-competition-table
+# 将棋部OB会用の対戦表作成
