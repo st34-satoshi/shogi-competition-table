@@ -1,6 +1,7 @@
 import csv
 import sys
 import os
+output_position = False  # if you want to output position, change it True
 
 
 class Participant:
@@ -12,6 +13,7 @@ class Participant:
         self.active = active  # boolean
         self.to_play_participants = []
         self.opponents = []
+        self.playing_positions = []  # position is int start from 1. the oldest participant is 1
 
     def make_to_play_participants(self, participant_list):
         # grade_diff * 100 + year_diff
@@ -38,12 +40,30 @@ class Participant:
 
     def get_table_row(self):
         row = [self.name]
-        for opponent in self.opponents:
+        for round_index, opponent in enumerate(self.opponents):
             if opponent.id == self.id:
                 row.append("休み")
             else:
                 row.append(opponent.name)
+            if output_position:
+                row.append(str(self.playing_positions[round_index]))
         return row
+
+    def set_position(self, position, round):
+        # round start from 0
+        if len(self.playing_positions) != round:
+            print("Error: cannot set position. round and len of positions is not same! round, len positions = " + str(round) + ", " + str(len(self.playing_positions)))
+            return position
+        if self.opponents[round].id == self.id:
+            # rest
+            self.playing_positions.append(0)
+            # not increment
+            return position
+        else:
+            self.playing_positions.append(position)
+            # the opponent must be same position
+            self.opponents[round].playing_positions.append(position)
+            return position + 1
 
 
 def decide_player_to_play(participants_list, decided_id_dictionary):
@@ -132,6 +152,8 @@ def save_to_file(participant_list, play_times):
     header = ["氏名"]
     for r in range(play_times):
         header.append(str(r+1) + "回戦")
+        if output_position:
+            header.append("場所")
     comp_tables =[header]
     for participant in participant_list:
         comp_tables.append(participant.get_table_row())
@@ -144,15 +166,16 @@ def save_to_file(participant_list, play_times):
 
 if __name__ == '__main__':
     play_time = play_times()
-    print(play_time)
     participants_file_name = make_file_name()
     participants = make_participants_table(participants_file_name)
     decided_times = 0
     for r in range(play_time):
+        # decide opponent
         player_ids = next_match_list(participants)
         if player_ids is None:
             print("cannot decide next opponent")
             break
+        # set opponent
         for participant in participants:
             if participant.id in player_ids:
                 opponent_id = player_ids[participant.id]
@@ -160,6 +183,13 @@ if __name__ == '__main__':
             else:
                 # rest
                 participant.set_opponent(None)
+        # decide position
+        if output_position:
+            # order is year
+            position_number = 1
+            for participant in sorted(participants, key=lambda p: -1*(p.grade+100*p.year)):
+                if len(participant.playing_positions) == decided_times:
+                    position_number = participant.set_position(position_number, decided_times)
         decided_times += 1
     # save
     save_to_file(participants, decided_times)
