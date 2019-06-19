@@ -187,7 +187,7 @@ if __name__ == '__main__':
         if output_position:
             # order is year
             position_number = 1
-            for participant in sorted(participants, key=lambda p: -1*(p.grade+100*p.year)):
+            for participant in sorted(participants, key=lambda p: p.grade+100*p.year):
                 if len(participant.playing_positions) == decided_times:
                     position_number = participant.set_position(position_number, decided_times)
         decided_times += 1
