@@ -2,12 +2,12 @@ import csv
 import sys
 import os
 import random
-import copy
 
 
 class Participant:
     def __init__(self, id, row):
         self.id = id
+        self.rest_count = 0
         self.name = row[0]
         self.year = int(row[1][1:])  # int
         self.grade = float(row[2])  # float
@@ -17,7 +17,6 @@ class Participant:
         self.opponent = None  # Participant object
         self.position = -1
         self.row = row
-        self.rest_count = 0
 
     def make_played_player_name_list(self, row):
         played_player_list = []
@@ -39,6 +38,10 @@ class Participant:
                 win_point += 1
             elif win_char == "-":
                 win_point += 0.5
+            elif win_char == "X":
+                pass
+            else:
+                print("Error: 勝敗が正しく入力されていません．" + row)
         return win_point
 
     def decide_opponent(self, ob_list):
@@ -58,11 +61,11 @@ class Participant:
         row = self.row
         if self.opponent.id == self.id:
             row.append("休み")
-            row.append("")
+            row.append("0")
         else:
             row.append(self.opponent.name)
             row.append(str(self.position))
-        row.append("")
+        row.append("-")
         return row
 
     def set_position(self, position_n):
@@ -96,35 +99,30 @@ def make_participants_list(file_name):
         header = next(reader)
         next_round_number = len(header) // 3
         participant_id = 0
-        try:
-            for row in reader:
-                participant = Participant(participant_id, row)
-                participant_id += 1
-                if participant.active:
-                    active_participants.append(participant)
-                    all_participant_list.append(participant)
-                else:
-                    ob_participants.append(participant)
-                    all_participant_list.append(participant)
-                if row[0] in participants_name_list:
-                    print("同じ名前が二つあります．" + row[0])
-                    exit()
-                participants_name_list.append(row[0])
-        except:
-            print("入力ファイルに誤りがあります")
-
-    # TODO remove
-    # # make to play list of each participants
-    # for participant in participant_list:
-    #     participant.make_to_play_participants(participant_list)
+        # try:
+        for row in reader:
+            participant = Participant(participant_id, row)
+            participant_id += 1
+            if participant.active:
+                active_participants.append(participant)
+                all_participant_list.append(participant)
+            else:
+                ob_participants.append(participant)
+                all_participant_list.append(participant)
+            if row[0] in participants_name_list:
+                print("同じ名前が二つあります．" + row[0])
+                exit()
+            participants_name_list.append(row[0])
+        # except:
+        #     print("入力ファイルに誤りがあります")
 
     return all_participant_list, active_participants, ob_participants, next_round_number, header
 
 
 def make_file_name():
     file_name = "participants.csv"
-    if len(sys.argv) >= 3:
-        file_name = sys.argv[2]
+    if len(sys.argv) >= 2:
+        file_name = sys.argv[1]
     if not os.path.exists(file_name):
         print(file_name + " というファイルは存在しません．")
         exit()
@@ -145,6 +143,7 @@ def save_to_file(participant_list, header):
     with open(save_file, 'w', encoding='utf-8') as f:
         writer = csv.writer(f, lineterminator='\n')  # 改行コード（\n）を指定しておく
         writer.writerows(comp_tables)  # 2次元配列も書き込める
+    print("save "+save_file)
 
 
 def decide_active_opponent(active_participants, ob_participants):
@@ -192,11 +191,18 @@ def decide_ob_opponent(ob_participants):
 
 if __name__ == '__main__':
     participants_file_name = make_file_name()
+    print("read "+participants_file_name)
     all_participants, active_participants_list, ob_participants_list, next_round, head = make_participants_list(participants_file_name)
     # sort active participants, win point, random
     random.shuffle(active_participants_list)
     # if the number is odd, decide rest one
     if (len(active_participants_list) + len(ob_participants_list)) % 2 == 1:
+        # if you want to choose rest pearson by hand change here
+        # for pa in all_participants:
+        #     if pa.name == "山田1":
+        #         pa.opponent = pa
+        #         ob_participants_list.remove(pa)
+        #         break
         active_participants_list = sorted(active_participants_list, key=lambda p: p.rest_count * -1)
         rest_active = active_participants_list.pop(0)
         rest_active.opponent = rest_active
