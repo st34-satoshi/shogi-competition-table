@@ -6,7 +6,8 @@ participants.csvファイルを参照．
 
 ## 実行方法
 第一引数に対戦回数，第二引数に参加者リストのファイル名を指定する．(参加者リストのファイル名は省略可能)
-```buildoutcfg
+
+```
 python3 main.py 3 participants.csv
 ```  
 competition-table.csvファイルが作成される．
