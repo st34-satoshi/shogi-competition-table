@@ -17,12 +17,16 @@ class Participant:
         self.opponent = None  # Participant object
         self.position = -1
         self.row = row
+        self.rest_count = 0
 
-    @staticmethod
-    def make_played_player_name_list(row):
+    def make_played_player_name_list(self, row):
         played_player_list = []
         for i in range(1, len(row) // 3):
-            played_player_list.append(row[i*3+0])
+            opponent_name = row[i*3+0]
+            if opponent_name == "休み":
+                self.rest_count += 1
+            else:
+                played_player_list.append(opponent_name)
         return played_player_list
 
     @staticmethod
@@ -192,7 +196,8 @@ if __name__ == '__main__':
     # sort active participants, win point, random
     random.shuffle(active_participants_list)
     # if the number is odd, decide rest one
-    if len(active_participants_list) + len(ob_participants_list) % 2 == 1:
+    if (len(active_participants_list) + len(ob_participants_list)) % 2 == 1:
+        active_participants_list = sorted(active_participants_list, key=lambda p: p.rest_count * -1)
         rest_active = active_participants_list.pop(0)
         rest_active.opponent = rest_active
     active_participants_list = sorted(active_participants_list, key=lambda p: p.win_point*-1)
